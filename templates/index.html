@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuikChex Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .status-success { background-color: #e8f5e9; }
+        .status-error { background-color: #ffebee; }
+        .status-info { background-color: #e3f2fd; }
+    </style>
+</head>
+<body>
+    <h1>QuikChex Attendance Marker</h1>
+    <form id="attendanceForm">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="quickchex_pass">QuikChex Password:</label>
+            <input type="password" id="quickchex_pass" required>
+        </div>
+        <div class="form-group">
+            <label for="gmail_app_password">Gmail App Password:</label>
+            <input type="password" id="gmail_app_password" required>
+        </div>
+        <button type="submit" id="submitBtn">Mark Attendance</button>
+    </form>
+    <div id="status"></div>
+
+    <script>
+        const form = document.getElementById('attendanceForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusDiv = document.getElementById('status');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            statusDiv.innerHTML = '';
+
+            const data = {
+                email: document.getElementById('email').value,
+                quickchex_pass: document.getElementById('quickchex_pass').value,
+                gmail_app_password: document.getElementById('gmail_app_password').value
+            };
+
+            try {
+                const eventSource = new EventSource(`/mark?${new URLSearchParams(data)}`);
+
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    const statusItem = document.createElement('div');
+                    statusItem.className = `status-item status-${data.status === 'error' ? 'error' : data.status === 'success' ? 'success' : 'info'}`;
+                    statusItem.textContent = data.message;
+                    statusDiv.appendChild(statusItem);
+                    statusDiv.scrollTop = statusDiv.scrollHeight;
+                };
+
+                eventSource.onerror = () => {
+                    eventSource.close();
+                    submitBtn.disabled = false;
+                    const errorItem = document.createElement('div');
+                    errorItem.className = 'status-item status-error';
+                    errorItem.textContent = 'Connection closed';
+                    statusDiv.appendChild(errorItem);
+                };
+            } catch (error) {
+                submitBtn.disabled = false;
+                const errorItem = document.createElement('div');
+                errorItem.className = 'status-item status-error';
+                errorItem.textContent = `Error: ${error.message}`;
+                statusDiv.appendChild(errorItem);
+            }
+        });
+    </script>
+</body>
+</html> 
