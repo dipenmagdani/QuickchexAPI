@@ -26,11 +26,15 @@ class AttendanceRequest(BaseModel):
 
 app = FastAPI()
 
+# Get the current directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+
 # Create templates directory if it doesn't exist
-os.makedirs("templates", exist_ok=True)
+os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
 # Setup templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -384,4 +388,5 @@ async def mark_attendance(data: AttendanceRequest):
     )
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=9003)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
