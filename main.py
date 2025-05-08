@@ -16,6 +16,13 @@ import asyncio
 import imaplib
 import email
 import urllib.parse
+from pydantic import BaseModel
+
+# Define request model
+class AttendanceRequest(BaseModel):
+    email: str
+    quickchex_pass: str
+    gmail_app_password: str
 
 app = FastAPI()
 
@@ -358,6 +365,11 @@ async def generate_attendance_stream(user_email, quickchex_pass, gmail_app_passw
 
     except Exception as e:
         yield f"❌ An error occurred: {str(e)}\n"# Create HTML template file# Create the main index pag
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "message": "API is running"}
 
 # Mark attendance endpoint - get credentials from global variables
 @app.post("/mark")
